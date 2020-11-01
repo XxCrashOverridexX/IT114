@@ -1,5 +1,7 @@
 package utils;
 
+import java.util.List;
+
 public class Debug {
 	private static boolean isDebug = true;
 
@@ -19,4 +21,17 @@ public class Debug {
 		}
 		System.out.println(message);
 	}
-}
+	public static void hiddenLog(Character logmessage) {
+		if (!isDebug) {
+			return;}
+		System.out.println(logmessage);
+		}
+
+	public static void hiddenLog(Character[] logmessage) {
+		if (!isDebug) {
+			return;}
+		System.out.println(logmessage);
+		}
+	}
+	
+	

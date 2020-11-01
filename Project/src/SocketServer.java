@@ -16,6 +16,7 @@ public class SocketServer {
     private final static String PRELOBBY = "PreLobby";
     protected final static String LOBBY = "Lobby";
 
+
     private void start(int port) {
 	this.port = port;
 	Debug.log("Waiting for client");
@@ -184,6 +185,9 @@ public class SocketServer {
 	    return true;
 	}
     }
+    
+   
+    
 
     public static void main(String[] args) {
 	// let's allow port to be passed as a command line arg

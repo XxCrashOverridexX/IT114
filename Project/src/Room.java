@@ -12,6 +12,7 @@ public class Room implements AutoCloseable {
     private final static String COMMAND_TRIGGER = "/";
     private final static String CREATE_ROOM = "createroom";
     private final static String JOIN_ROOM = "joinroom";
+    private final static String START_GAME = "startgame";
 
     public Room(String name) {
 	this.name = name;
@@ -24,6 +25,9 @@ public class Room implements AutoCloseable {
     public String getName() {
 	return name;
     }
+    
+
+
 
     private List<ServerThread> clients = new ArrayList<ServerThread>();
 
@@ -106,6 +110,11 @@ public class Room implements AutoCloseable {
 		    joinRoom(roomName, client);
 		    wasCommand = true;
 		    break;
+		case START_GAME:
+			Hangman.startGame();
+			//Hangman.sendGameText();
+			wasCommand = true;
+			break;
 		}
 	    }
 	}
@@ -174,4 +183,6 @@ public class Room implements AutoCloseable {
 	name = null;
 	// should be eligible for garbage collection now
     }
+
+
 }
