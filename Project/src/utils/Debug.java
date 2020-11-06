@@ -32,6 +32,13 @@ public class Debug {
 			return;}
 		System.out.println(logmessage);
 		}
+
+	public static void log(List<String> logmessage) {
+		if (!isDebug) {
+			return;}
+		System.out.println(logmessage);
+		
+	}
 	}
 	
 	

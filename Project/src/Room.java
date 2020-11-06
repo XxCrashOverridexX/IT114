@@ -29,7 +29,7 @@ public class Room implements AutoCloseable {
 
 
 
-    private List<ServerThread> clients = new ArrayList<ServerThread>();
+    private static List<ServerThread> clients = new ArrayList<ServerThread>();
 
     protected synchronized void addClient(ServerThread client) {
 	client.setCurrentRoom(this);
@@ -112,7 +112,7 @@ public class Room implements AutoCloseable {
 		    break;
 		case START_GAME:
 			Hangman.startGame();
-			//Hangman.sendGameText();
+			GameLogic.gameLogic();
 			wasCommand = true;
 			break;
 		}
@@ -160,6 +160,20 @@ public class Room implements AutoCloseable {
 	    }
 	}
     }
+    
+    // server broadcast
+    
+    protected static void serverBroadcast(String message) {
+    	Iterator<ServerThread> iter = clients.iterator();
+    	while (iter.hasNext()) {
+    	    ServerThread client = iter.next();
+    	    boolean messageSent = client.send("Server", message);
+    	    if (!messageSent) {
+    		iter.remove();
+    		Debug.log("Removed client " + client.getId());
+    	    }
+    	}
+        }
 
     /***
      * Will attempt to migrate any remaining clients to the Lobby room. Will then
