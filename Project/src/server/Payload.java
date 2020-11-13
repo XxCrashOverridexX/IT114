@@ -1,6 +1,8 @@
+package server;
 import java.io.Serializable;
 
 public class Payload implements Serializable {
+	
 
     /**
      * baeldung.com/java-serial-version-uid
