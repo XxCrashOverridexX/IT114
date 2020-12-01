@@ -1,4 +1,3 @@
-#IT 114 Project
+#IT 114 Project - Hangman
 
-## Shawn McCausland
-### BROWSER EDIT
+Eventually I'll tell you about hangman. Not gonna do that right now
