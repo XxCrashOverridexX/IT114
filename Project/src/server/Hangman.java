@@ -46,7 +46,7 @@ class Hangman {
 		for (int i=0;i<playerWord.size();i++) {
 			if (wordAsChar.get(i) == guess) {
 				playerWord.set(i, wordAsChar.get(i));
-				Room.serverBroadcast("Correct!");
+				//Room.serverBroadcast("Correct!");
 			}
 		}
 		sendToPlayer();
@@ -61,7 +61,7 @@ class Hangman {
 		outputToPlayer.replace("]", "");
 				
 		
-		Room.serverBroadcast(outputToPlayer);
+		//Room.serverBroadcast(outputToPlayer);
 		
 	}
 
