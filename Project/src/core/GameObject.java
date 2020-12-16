@@ -16,6 +16,7 @@ public abstract class GameObject implements Serializable {
     protected Point direction = new Point(0, 0);
     protected Dimension size = new Dimension(25, 25);
     protected String name = "";
+    protected String color = "";
     protected boolean isActive = true;
 
     /**
@@ -59,6 +60,14 @@ public abstract class GameObject implements Serializable {
     public String getName() {
 	return this.name;
     }
+    
+    public void setColor(String color) {
+    	this.color = color;
+        }
+
+        public String getColor() {
+    	return this.color;
+        }
 
     /**
      * Enable or disable object

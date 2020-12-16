@@ -33,6 +33,7 @@ public class GamePanel extends BaseGamePanel implements Event {
     List<Player> players;
     Player myPlayer;
     String playerUsername;// caching it so we don't lose it when room is wiped
+    String playerColor;
     List<Chair> chairs;
     List<Ticket> tickets;
     private final static Logger log = Logger.getLogger(GamePanel.class.getName());
@@ -43,6 +44,12 @@ public class GamePanel extends BaseGamePanel implements Event {
 	if (myPlayer != null) {
 	    myPlayer.setName(playerUsername);
 	}
+    }
+	public void setPlayerColor(String color) {
+		playerColor = color;
+		if (myPlayer != null) {
+		    myPlayer.setColor(playerColor);
+		}
     }
 
     @Override
@@ -61,6 +68,7 @@ public class GamePanel extends BaseGamePanel implements Event {
 	if (!exists) {
 	    Player p = new Player();
 	    p.setName(clientName);
+	   
 	    players.add(p);
 	    // want .equals here instead of ==
 	    // https://www.geeksforgeeks.org/difference-equals-method-java/

@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -49,6 +50,7 @@ public class ClientUI extends JFrame implements Event {
     String username;
     RoomsPanel roomsPanel;
     JMenuBar menu;
+	String color;
 
     public ClientUI(String title) {
 	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -122,7 +124,14 @@ public class ClientUI extends JFrame implements Event {
 
     void createUserInputScreen() {
 	JPanel panel = new JPanel();
-	panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+	panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+	JLabel colorLabel = new JLabel("Color:");
+	JComboBox<String> color = new JComboBox<String>();
+	color.addItem("Red");
+	color.addItem("Blue");
+	color.addItem("Green");
+	panel.add(colorLabel);
+	panel.add(color);
 	JLabel userLabel = new JLabel("Username:");
 	JTextField username = new JTextField();
 	panel.add(userLabel);
@@ -134,15 +143,18 @@ public class ClientUI extends JFrame implements Event {
 	    @Override
 	    public void actionPerformed(ActionEvent e) {
 		String name = username.getText();
+		String playerColor = color.getSelectedItem().toString();
 		if (name != null && name.length() > 0) {
 		    // need external ref since "this" context is the action event, not ClientUI
 		    self.username = name;
+		    self.color = playerColor;
 		    // this order matters
 		    createDrawingPanel();
 		    pack();
 		    self.setTitle(self.getTitle() + " - " + self.username);
 		    game.setPlayerName(self.username);
 		    SocketClient.INSTANCE.setUsername(self.username);
+		    log.log(Level.INFO, playerColor +" THIS IS THE LOG OF THE COLOR THE PLAYER CHOSE");
 
 		    self.next();
 		}
