@@ -8,36 +8,33 @@ import java.io.Serializable;
 
 import core.GameObject;
 
-public class Player extends GameObject implements Serializable {
+public class Ticket extends GameObject implements Serializable {
     /**
      * 
      */
     private static final long serialVersionUID = -6088251166673414031L;
-    Color color = Color.RED;
-    Point nameOffset = new Point(-5, -30);
-    int ticket = -1;
-    boolean isReady = false;
+    Color color = Color.DARK_GRAY;
+    Point nameOffset = new Point(0, -5);
+    Player holder = null;
 
-    public void setReady(boolean r) {
-	isReady = r;
+    public Ticket(String name) {
+	setName(name);
     }
 
-    public boolean isReady() {
-	return isReady;
+    public boolean isAvailable() {
+	return holder == null;
     }
 
-    public boolean hasTicket() {
-	return ticket > -1;
+    public void setPlayer(Player p) {
+	holder = p;
     }
 
-    public void setTicket(int n) {
-	ticket = n;
-    }
-
-    public int takeTicket() {
-	int t = ticket;
-	ticket = -1;
-	return t;
+    @Override
+    public void setSize(int x, int y) {
+	super.setSize(x, y);
+	// division used are just magic numbers, played with it until it looked ok
+	nameOffset.x = (int) (x / 3);
+	nameOffset.y = (int) (y / 1.5f);
     }
 
     /**
@@ -49,10 +46,10 @@ public class Player extends GameObject implements Serializable {
 	// super
 	if (super.draw(g)) {
 	    g.setColor(color);
-	    g.fillOval(position.x, position.y, size.width, size.height);
-	    g.setColor(color);
+	    g.fillRect(position.x, position.y, size.width, size.height);
+	    g.setColor(Color.WHITE);
 	    g.setFont(new Font("Monospaced", Font.PLAIN, 12));
-	    g.drawString( name, position.x + nameOffset.x, position.y + nameOffset.y);
+	    g.drawString(getName(), position.x + nameOffset.x, position.y + nameOffset.y);
 	}
 	return true;
     }

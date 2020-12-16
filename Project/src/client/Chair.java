@@ -8,36 +8,25 @@ import java.io.Serializable;
 
 import core.GameObject;
 
-public class Player extends GameObject implements Serializable {
+public class Chair extends GameObject implements Serializable {
     /**
      * 
      */
     private static final long serialVersionUID = -6088251166673414031L;
-    Color color = Color.RED;
-    Point nameOffset = new Point(-5, -30);
-    int ticket = -1;
-    boolean isReady = false;
+    Color color = Color.LIGHT_GRAY;
+    Point nameOffset = new Point(-10, -5);
+    Player seated = null;
 
-    public void setReady(boolean r) {
-	isReady = r;
+    public Chair(String name) {
+	setName(name);
     }
 
-    public boolean isReady() {
-	return isReady;
+    public boolean isAvailable() {
+	return seated == null;
     }
 
-    public boolean hasTicket() {
-	return ticket > -1;
-    }
-
-    public void setTicket(int n) {
-	ticket = n;
-    }
-
-    public int takeTicket() {
-	int t = ticket;
-	ticket = -1;
-	return t;
+    public void setPlayer(Player p) {
+	seated = p;
     }
 
     /**
@@ -49,10 +38,10 @@ public class Player extends GameObject implements Serializable {
 	// super
 	if (super.draw(g)) {
 	    g.setColor(color);
-	    g.fillOval(position.x, position.y, size.width, size.height);
-	    g.setColor(color);
+	    g.drawRect(position.x, position.y, size.width, size.height);
+	    g.setColor(Color.WHITE);
 	    g.setFont(new Font("Monospaced", Font.PLAIN, 12));
-	    g.drawString( name, position.x + nameOffset.x, position.y + nameOffset.y);
+	    g.drawString((isAvailable() ? "Available" : "Taken"), position.x + nameOffset.x, position.y + nameOffset.y);
 	}
 	return true;
     }

@@ -1,5 +1,6 @@
 package server;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -125,6 +126,41 @@ public class ServerThread extends Thread {
 	return sendPayload(payload);
     }
 
+    protected boolean sendChair(String chairName, Point chairPosition, Dimension chairSize, boolean isAvailable) {
+	Payload payload = new Payload();
+	payload.setPayloadType(PayloadType.SYNC_CHAIR);
+	payload.setMessage(chairName);
+	if (chairPosition != null) {
+	    payload.setPoint(chairPosition);
+	}
+	if (chairSize != null) {
+	    payload.setPoint2(new Point(chairSize.width, chairSize.height));
+	}
+	payload.setFlag(isAvailable);
+	return sendPayload(payload);
+    }
+
+    protected boolean sendTicket(String ticketName, Point ticketPosition, Dimension ticketSize, boolean isAvailable) {
+	Payload payload = new Payload();
+	payload.setPayloadType(PayloadType.SYNC_TICKET);
+	payload.setMessage(ticketName);
+	if (ticketPosition != null) {
+	    payload.setPoint(ticketPosition);
+	}
+	if (ticketSize != null) {
+	    payload.setPoint2(new Point(ticketSize.width, ticketSize.height));
+	}
+	payload.setFlag(isAvailable);
+	return sendPayload(payload);
+    }
+
+    protected boolean sendGameAreaSize(Dimension roomSize) {
+	Payload payload = new Payload();
+	payload.setPayloadType(PayloadType.SYNC_GAME_SIZE);
+	payload.setPoint(new Point(roomSize.width, roomSize.height));
+	return sendPayload(payload);
+    }
+
     private boolean sendPayload(Payload p) {
 	try {
 	    out.writeObject(p);
@@ -175,7 +211,7 @@ public class ServerThread extends Thread {
 	    break;
 	case GET_ROOMS:
 	    // far from efficient but it works for example sake
-	    List<String> roomNames = currentRoom.getRooms();
+	    List<String> roomNames = currentRoom.getRooms(p.getMessage());
 	    Iterator<String> iter = roomNames.iterator();
 	    while (iter.hasNext()) {
 		String room = iter.next();
@@ -186,6 +222,9 @@ public class ServerThread extends Thread {
 		    }
 		}
 	    }
+	    break;
+	case CREATE_ROOM:
+	    currentRoom.createRoom(p.getMessage(), this);
 	    break;
 	case JOIN_ROOM:
 	    currentRoom.joinRoom(p.getMessage(), this);

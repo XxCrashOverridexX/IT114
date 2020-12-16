@@ -35,37 +35,9 @@ class Hangman {
 		log.log(Level.INFO,secretWord);
 		
 		
-			}
+			}}
 	
-	public static void setOrder() {
-		//List<User> gameOrder = new ArrayList<User>();
-		
-	}
-	
-	public static void checkLetterGuess(String guess) { //Not sure why this works above to change strings and not here
-		for (int i=0;i<playerWord.size();i++) {
-			if (wordAsChar.get(i) == guess) {
-				playerWord.set(i, wordAsChar.get(i));
-				//Room.serverBroadcast("Correct!");
-			}
-		}
-		sendToPlayer();
-		
-	}
-	
-	public static void sendToPlayer(){ // Doesn't work here either - later problem
-		String outputToPlayer;
-		outputToPlayer = playerWord.toString();
-		outputToPlayer.replace("[", "");
-		outputToPlayer.replace(",", "");		
-		outputToPlayer.replace("]", "");
-				
-		
-		//Room.serverBroadcast(outputToPlayer);
-		
-	}
 
-}
 	
 
 

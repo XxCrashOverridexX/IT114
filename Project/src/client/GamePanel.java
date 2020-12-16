@@ -1,12 +1,17 @@
 package client;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +33,10 @@ public class GamePanel extends BaseGamePanel implements Event {
     List<Player> players;
     Player myPlayer;
     String playerUsername;// caching it so we don't lose it when room is wiped
+    List<Chair> chairs;
+    List<Ticket> tickets;
     private final static Logger log = Logger.getLogger(GamePanel.class.getName());
+    Dimension gameAreaSize = new Dimension();
 
     public void setPlayerName(String name) {
 	playerUsername = name;
@@ -65,8 +73,6 @@ public class GamePanel extends BaseGamePanel implements Event {
 
     @Override
     public void onClientDisconnect(String clientName, String message) {
-
-	// TODO Auto-generated method stub
 	System.out.println("Disconnected on Game Panel: " + clientName);
 	Iterator<Player> iter = players.iterator();
 	while (iter.hasNext()) {
@@ -91,10 +97,8 @@ public class GamePanel extends BaseGamePanel implements Event {
 	// players.clear();
 	Iterator<Player> iter = players.iterator();
 	while (iter.hasNext()) {
-	    Player p = iter.next();
-	    // if (p != myPlayer) {
+	    iter.next();
 	    iter.remove();
-	    // }
 	}
 	myPlayer = null;
 	System.out.println("Cleared players");
@@ -103,10 +107,22 @@ public class GamePanel extends BaseGamePanel implements Event {
     @Override
     public void awake() {
 	players = new ArrayList<Player>();
+	chairs = new ArrayList<Chair>();
+	tickets = new ArrayList<Ticket>();
+	GamePanel gp = this;
+	// fix the loss of focus when typing in chat
+	addMouseListener(new MouseAdapter() {
+
+	    @Override
+	    public void mousePressed(MouseEvent e) {
+		gp.getRootPane().grabFocus();
+	    }
+	});
     }
 
     @Override
     public void start() {
+	// TODO goes on server side, here for testing
 
     }
 
@@ -173,10 +189,33 @@ public class GamePanel extends BaseGamePanel implements Event {
 
     @Override
     public synchronized void draw(Graphics g) {
-	setBackground(Color.BLACK);
+	setBackground(Color.WHITE);
 	((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+	drawChairs(g);
+	drawTickets(g);
 	drawPlayers(g);
 	drawText(g);
+	drawUI((Graphics2D) g);
+    }
+
+    private synchronized void drawChairs(Graphics g) {
+	Iterator<Chair> iter = chairs.iterator();
+	while (iter.hasNext()) {
+	    Chair c = iter.next();
+	    if (c != null) {
+		c.draw(g);
+	    }
+	}
+    }
+
+    private synchronized void drawTickets(Graphics g) {
+	Iterator<Ticket> iter = tickets.iterator();
+	while (iter.hasNext()) {
+	    Ticket t = iter.next();
+	    if (t != null) {
+		t.draw(g);
+	    }
+	}
     }
 
     private synchronized void drawPlayers(Graphics g) {
@@ -190,70 +229,158 @@ public class GamePanel extends BaseGamePanel implements Event {
     }
 
     private void drawText(Graphics g) {
-	g.setColor(Color.WHITE);
+	g.setColor(Color.BLACK);
 	g.setFont(new Font("Monospaced", Font.PLAIN, 12));
 	if (myPlayer != null) {
-	    g.drawString("Debug MyPlayer: " + myPlayer.toString(), 10, 20);
+	   g.drawString(myPlayer.toString(), 10, 20);
 	}
+
     }
+
+    private void drawUI(Graphics2D g2) {
+	Stroke oldStroke = g2.getStroke();
+	g2.setStroke(new BasicStroke(2));
+	g2.drawRect(0, 0, gameAreaSize.width, gameAreaSize.height);
+	g2.setStroke(oldStroke);
+    }
+    
 
     @Override
     public void quit() {
 	log.log(Level.INFO, "GamePanel quit");
+	this.removeAll();
+    }
+
+ 
+
+    @Override
+    public void onGetRoom(String roomName) {
+	// TODO Auto-generated method stub
+
     }
 
     @Override
-    public void attachListeners() {
-	InputMap im = this.getRootPane().getInputMap();
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, 0, false), "up_pressed");
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, 0, true), "up_released");
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, false), "down_pressed");
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0, true), "down_released");
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, false), "left_pressed");
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0, true), "left_released");
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, false), "right_pressed");
-	im.put(KeyStroke.getKeyStroke(KeyEvent.VK_D, 0, true), "right_released");
-	ActionMap am = this.getRootPane().getActionMap();
-
-	am.put("up_pressed", new MoveAction(KeyEvent.VK_W, true));
-	am.put("up_released", new MoveAction(KeyEvent.VK_W, false));
-
-	am.put("down_pressed", new MoveAction(KeyEvent.VK_S, true));
-	am.put("down_released", new MoveAction(KeyEvent.VK_S, false));
-
-	am.put("left_pressed", new MoveAction(KeyEvent.VK_A, true));
-	am.put("left_released", new MoveAction(KeyEvent.VK_A, false));
-
-	am.put("right_pressed", new MoveAction(KeyEvent.VK_D, true));
-	am.put("right_released", new MoveAction(KeyEvent.VK_D, false));
+    public void onResize(Point p) {
+	// TODO Auto-generated method stub
+	gameAreaSize = new Dimension(p.x, p.y);
+	this.setPreferredSize(gameAreaSize);
+	this.setMinimumSize(gameAreaSize);
+	this.setMaximumSize(gameAreaSize);
+	this.setSize(gameAreaSize);
+	System.out.println(this.getSize());
+	this.invalidate();
+	this.repaint();
     }
 
     @Override
-    public void onSyncDirection(String clientName, Point direction) {
-	Iterator<Player> iter = players.iterator();
+    public void onGetChair(String chairName, Point position, Point dimension, boolean isAvailable) {
+	// TODO Auto-generated method stub
+	boolean exists = false;
+	System.out.println("Available " + (isAvailable ? "true" : "false"));
+	Iterator<Chair> iter = chairs.iterator();
 	while (iter.hasNext()) {
-	    Player p = iter.next();
-	    if (p != null && p.getName().equalsIgnoreCase(clientName)) {
-		System.out.println("Syncing direction: " + clientName);
-		p.setDirection(direction.x, direction.y);
-		System.out.println("From: " + direction);
-		System.out.println("To: " + p.getDirection());
+	    Chair c = iter.next();
+	    if (c.getName().equalsIgnoreCase(chairName)) {
+		exists = true;
+		// for now will fill in player as empty player so it's !null
+		// the player set only matters for the server
+		if (isAvailable) {
+		    c.setPlayer(null);
+		}
+		else {
+		    c.setPlayer(new Player());
+		}
 		break;
 	    }
+	}
+	if (!exists) {
+	    Chair c = new Chair(chairName);
+	    c.setPosition(position);
+	    c.setSize(dimension.x, dimension.y);
+	    if (isAvailable) {
+		c.setPlayer(null);
+	    }
+	    else {
+		c.setPlayer(new Player());
+	    }
+	    chairs.add(c);
 	}
     }
 
     @Override
-    public void onSyncPosition(String clientName, Point position) {
-	System.out.println("Got position for " + clientName);
-	Iterator<Player> iter = players.iterator();
+    public void onResetChairs() {
+	// TODO Auto-generated method stub
+	Iterator<Chair> iter = chairs.iterator();
 	while (iter.hasNext()) {
-	    Player p = iter.next();
-	    if (p != null && p.getName().equalsIgnoreCase(clientName)) {
-		System.out.println(clientName + " set " + position);
-		p.setPosition(position);
+	    Chair c = iter.next();
+	    c.setPlayer(null);
+	    iter.remove();
+	}
+    }
+
+    @Override
+    public void onGetTicket(String ticketName, Point position, Point dimension, boolean isAvailable) {
+	// TODO Auto-generated method stub
+	boolean exists = false;
+	Iterator<Ticket> iter = tickets.iterator();
+	while (iter.hasNext()) {
+	    Ticket t = iter.next();
+	    if (t.getName().equalsIgnoreCase(ticketName)) {
+		exists = true;
+		// for now will fill in player as empty player so it's !null
+		// the player set only matters for the server
+		if (isAvailable) {
+		    t.setPlayer(null);
+		}
+		else {
+		    t.setPlayer(new Player());
+		}
 		break;
 	    }
 	}
+	if (!exists) {
+	    Ticket t = new Ticket(ticketName);
+	    t.setPosition(position);
+	    t.setSize(dimension.x, dimension.y);
+	    if (isAvailable) {
+		t.setPlayer(null);
+	    }
+	    else {
+		t.setPlayer(new Player());
+	    }
+	    tickets.add(t);
+	}
     }
+
+    @Override
+    public void onResetTickets() {
+	// TODO Auto-generated method stub
+	Iterator<Ticket> iter = tickets.iterator();
+	while (iter.hasNext()) {
+	    Ticket t = iter.next();
+	    if (t.holder != null) {
+		t.holder.takeTicket();
+	    }
+	    t.setPlayer(null);
+	    iter.remove();
+	}
+    }
+
+	@Override
+	public void onSyncDirection(String clientName, Point direction) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onSyncPosition(String clientName, Point position) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void attachListeners() {
+		// TODO Auto-generated method stub
+		
+	}
 }

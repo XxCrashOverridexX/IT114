@@ -9,8 +9,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import client.Chair;
 import client.Player;
+import client.Ticket;
 import core.BaseGamePanel;
+import core.Helpers;
 
 public class Room extends BaseGamePanel implements AutoCloseable {
     private static SocketServer server;// used to refer to accessible server functions
@@ -21,8 +24,11 @@ public class Room extends BaseGamePanel implements AutoCloseable {
     private final static String COMMAND_TRIGGER = "/";
     private final static String CREATE_ROOM = "createroom";
     private final static String JOIN_ROOM = "joinroom";
+    private final static String READY = "ready";
     private List<ClientPlayer> clients = new ArrayList<ClientPlayer>();
-    static Dimension gameAreaSize = new Dimension(400, 600);
+    static Dimension gameAreaSize = new Dimension(800, 800);
+    private List<Chair> chairs = new ArrayList<Chair>();
+    private List<Ticket> tickets = new ArrayList<Ticket>();
 
     public Room(String name, boolean delayStart) {
 	super(delayStart);
@@ -49,6 +55,106 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	startPos.x = (int) (Math.random() * gameAreaSize.width);
 	startPos.y = (int) (Math.random() * gameAreaSize.height);
 	return startPos;
+    }
+
+    private void generateSeats() {
+	int players = clients.size();
+	final int chairs = Helpers.getNumberBetween(players, (int) (players * 1.5));
+	final Dimension chairSize = new Dimension(25, 25);
+	final float paddingLeft = .1f;
+	final float paddingRight = .9f;
+	final float paddingTop = .1f;
+	final float chairSpacing = chairSize.height * 1.75f;
+	final int chairHalfWidth = (int) (chairSize.width * .5);
+	final int screenWidth = gameAreaSize.width;
+	final int screenHeight = gameAreaSize.height;
+	for (int i = 0; i < chairs; i++) {
+	    Chair chair = new Chair("Chair " + (i + 1));
+	    Point chairPosition = new Point();
+	    if (i % 2 == 0) {
+		chairPosition.x = (int) ((screenWidth * paddingRight) - chairHalfWidth);
+	    }
+	    else {
+		chairPosition.x = (int) (screenWidth * paddingLeft);
+	    }
+	    chairPosition.y = (int) ((screenHeight * paddingTop) + (chairSpacing * (i / 2)));
+	    chair.setPosition(chairPosition);
+	    chair.setSize(chairSize.width, chairSize.height);
+	    chair.setPlayer(null);
+	    this.chairs.add(chair);
+	}
+
+    }
+
+    private void syncChairs() {
+	// fairest way seems to be syncing 1 chair at a time across all players
+	Iterator<Chair> chairIter = chairs.iterator();
+	while (chairIter.hasNext()) {
+	    Chair chair = chairIter.next();
+	    if (chair != null) {
+		Iterator<ClientPlayer> iter = clients.iterator();
+		while (iter.hasNext()) {
+		    ClientPlayer cp = iter.next();
+		    if (cp != null) {
+			cp.client.sendChair(chair.getName(), chair.getPosition(), chair.getSize(), chair.isAvailable());
+		    }
+		}
+	    }
+	}
+    }
+
+    private void generateTickets() {
+	int players = clients.size() + 1;
+	final int tickets = Helpers.getNumberBetween(players, (int) (players * 1.5));
+	final int screenWidth = gameAreaSize.width;
+	final int screenHeight = gameAreaSize.height;
+	final float paddingLeft = .3f;
+	final float paddingRight = .7f;
+	final float paddingTop = .3f;
+	final float paddingBottom = .7f;
+	Dimension ticketSize = new Dimension(30, 20);
+	System.out.println("Tickets to be made: " + tickets);
+	for (int i = 0; i < tickets; i++) {
+	    Ticket ticket = new Ticket("#" + Helpers.getNumberBetween(1, 10));
+	    Point ticketPosition = new Point();
+	    ticket.setPlayer(null);
+	    ticketPosition.x = Helpers.getNumberBetween((int) (screenWidth * paddingLeft),
+		    (int) (screenWidth * paddingRight));
+	    ticketPosition.y = Helpers.getNumberBetween((int) (screenHeight * paddingTop),
+		    (int) (screenHeight * paddingBottom));
+	    ticket.setPosition(ticketPosition);
+	    ticket.setSize(ticketSize.width, ticketSize.height);
+	    this.tickets.add(ticket);
+	}
+	System.out.println("Tickets made: " + this.tickets.size());
+    }
+
+    private void syncTickets() {
+	// fairest way seems to be syncing 1 ticket at a time across all players
+	Iterator<Ticket> ticketIter = tickets.iterator();
+	while (ticketIter.hasNext()) {
+	    Ticket ticket = ticketIter.next();
+	    if (ticket != null) {
+		Iterator<ClientPlayer> iter = clients.iterator();
+		while (iter.hasNext()) {
+		    ClientPlayer cp = iter.next();
+		    if (cp != null) {
+			cp.client.sendTicket(ticket.getName(), ticket.getPosition(), ticket.getSize(),
+				ticket.isAvailable());
+		    }
+		}
+	    }
+	}
+    }
+
+    private void syncGameSize() {
+	Iterator<ClientPlayer> iter = clients.iterator();
+	while (iter.hasNext()) {
+	    ClientPlayer cp = iter.next();
+	    if (cp != null) {
+		cp.client.sendGameAreaSize(gameAreaSize);
+	    }
+	}
     }
 
     protected synchronized void addClient(ServerThread client) {
@@ -98,6 +204,7 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	    // calculate random start position
 	    Point startPos = Room.getRandomStartPosition();
 	    cp.player.setPosition(startPos);
+	    cp.client.sendGameAreaSize(gameAreaSize);
 	    // tell our client of our server determined position
 	    cp.client.sendPosition(cp.client.getClientName(), startPos);
 	    // tell everyone else about our server determiend position
@@ -106,6 +213,7 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	    updateClientList(cp.client);
 	    // get dir/pos of existing players
 	    updatePlayers(cp.client);
+
 	}
     }
 
@@ -184,6 +292,23 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	server.joinLobby(client);
     }
 
+    protected void createRoom(String room, ServerThread client) {
+	if (server.createNewRoom(room)) {
+	    joinRoom(room, client);
+	}
+    }
+
+    private ClientPlayer getCP(ServerThread client) {
+	Iterator<ClientPlayer> iter = clients.iterator();
+	while (iter.hasNext()) {
+	    ClientPlayer cp = iter.next();
+	    if (cp.client == client) {
+		return cp;
+	    }
+	}
+	return null;
+    }
+
     /***
      * Helper function to process messages to trigger different functionality.
      * 
@@ -204,18 +329,30 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		    command = command.toLowerCase();
 		}
 		String roomName;
+		ClientPlayer cp = null;
 		switch (command) {
 		case CREATE_ROOM:
 		    roomName = comm2[1];
-		    if (server.createNewRoom(roomName)) {
-			joinRoom(roomName, client);
+		    cp = getCP(client);
+		    if (cp != null) {
+			createRoom(roomName, cp.client);
 		    }
 		    wasCommand = true;
 		    break;
 		case JOIN_ROOM:
 		    roomName = comm2[1];
-		    joinRoom(roomName, client);
+		    cp = getCP(client);
+		    if (cp != null) {
+			joinRoom(roomName, cp.client);
+		    }
 		    wasCommand = true;
+		    break;
+		case READY:
+		    cp = getCP(client);
+		    if (cp != null) {
+			cp.player.setReady(true);
+			readyCheck();
+		    }
 		    break;
 		}
 	    }
@@ -224,6 +361,26 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	    e.printStackTrace();
 	}
 	return wasCommand;
+    }
+
+    private void readyCheck() {
+	Iterator<ClientPlayer> iter = clients.iterator();
+	int total = clients.size();
+	int ready = 0;
+	while (iter.hasNext()) {
+	    ClientPlayer cp = iter.next();
+	    if (cp != null && cp.player.isReady()) {
+		ready++;
+	    }
+	}
+	if (ready >= total && chairs.size() == 0) {
+	    // start
+	    System.out.println("Everyone's ready, let's do this!");
+	    generateSeats();
+	    generateTickets();
+	    syncChairs();
+	    syncTickets();
+	}
     }
 
     protected void sendConnectionStatus(ServerThread client, boolean isConnect, String message) {
@@ -319,8 +476,8 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	}
     }
 
-    public List<String> getRooms() {
-	return server.getRooms();
+    public List<String> getRooms(String search) {
+	return server.getRooms(search);
     }
 
     /***
