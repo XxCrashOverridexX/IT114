@@ -1,6 +1,7 @@
 package server;
 
 import java.awt.Dimension;
+import java.lang.*;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.ArrayList;
@@ -24,11 +25,18 @@ public class Room extends BaseGamePanel implements AutoCloseable {
     private final static String COMMAND_TRIGGER = "/";
     private final static String CREATE_ROOM = "createroom";
     private final static String JOIN_ROOM = "joinroom";
+    private final static String START_GAME = "startgame";
     private final static String READY = "ready";
+    private final static String GUESS = "guess";
+    private final static String SOLVE = "solve";
     private List<ClientPlayer> clients = new ArrayList<ClientPlayer>();
     static Dimension gameAreaSize = new Dimension(800, 800);
     private List<Chair> chairs = new ArrayList<Chair>();
     private List<Ticket> tickets = new ArrayList<Ticket>();
+    private Player currentTurn;
+    String playerWord ="";
+    public String secretWord;
+    public char wordAsChar[];
 
     public Room(String name, boolean delayStart) {
 	super(delayStart);
@@ -354,6 +362,23 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 			readyCheck();
 		    }
 		    break;
+		case START_GAME:
+		    gameInit();
+		   
+		    wasCommand = true;
+		    break;
+		    
+		case GUESS:
+		    if(checkLetter(comm2[1].charAt(0))) {
+		    	Player.points +=5;
+		    }
+		   
+		    wasCommand = true;
+		    break;
+		case SOLVE:
+			solveAttempt(comm2[1]);
+			 wasCommand = true;
+			    break;
 		}
 	    }
 	}
@@ -362,7 +387,62 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 	}
 	return wasCommand;
     }
+    
+    
+    private void gameInit() {
+    	//sets points to 0 in case more than one game was played
+    	Iterator<ClientPlayer> iter = clients.iterator();
+    	while(iter.hasNext()) { // BROKEN
+    		//Player.points = 0; BROKEN
+    	}//while
+    	//Get word
+    	secretWord = Words.Selector();
+    	serverBroadcast("Secret Word is "+secretWord);
+    	for (int i=0; i<secretWord.length();i++) {
+    		wordAsChar[i] = secretWord.charAt(i);
+    	}
+    	 
+    	
+    	for (int i=0; i<secretWord.length();i++) {
+    		playerWord.concat("_");
+    	}    	
+    	serverBroadcast(playerWord);
+    	serverBroadcast("Welcome to Hangman!");
+    }
 
+    private void turns() {
+    	Iterator<ClientPlayer> iter = clients.iterator();
+    	for (int i=0;i<clients.size();i++) {
+    		//clients.Player.playerNum = i;
+    	}
+    }
+    
+    private void solveAttempt(String guess) {
+		if (guess == secretWord) {
+			serverBroadcast("Congrats! you did it!");
+		
+		}else {
+			
+		}
+    	
+    }
+    
+    private Boolean checkLetter(char guess) {
+    	Boolean returnable = false;
+    	for (int i=0; i<secretWord.length();i++) {
+    		if (secretWord.charAt(i) == guess) {
+    			serverBroadcast("Math Found");
+    			wordAsChar[i] = secretWord.charAt(i);
+    			returnable = true;
+    		}else {
+    			serverBroadcast("Nope!");
+    			returnable = false;
+    		}
+    	}
+		return returnable;
+    	
+    }
+    
     private void readyCheck() {
 	Iterator<ClientPlayer> iter = clients.iterator();
 	int total = clients.size();
@@ -393,6 +473,14 @@ public class Room extends BaseGamePanel implements AutoCloseable {
 		log.log(Level.INFO, "Removed client " + c.client.getId());
 	    }
 	}
+    }
+    
+    protected void serverBroadcast(String message) {
+    	Iterator<ClientPlayer> iter = clients.iterator();
+    	while (iter.hasNext()) {
+    	    ClientPlayer client = iter.next();
+    	    client.client.send("Server", message);
+    	}
     }
 
     /***

@@ -13,10 +13,12 @@ public class Player extends GameObject implements Serializable {
      * 
      */
     private static final long serialVersionUID = -6088251166673414031L;
+    public static int points = 0;
     Color color = Color.RED;
     Point nameOffset = new Point(-5, -30);
     int ticket = -1;
     boolean isReady = false;
+    public int playerNum;
 
     public void setReady(boolean r) {
 	isReady = r;
@@ -39,23 +41,9 @@ public class Player extends GameObject implements Serializable {
 	ticket = -1;
 	return t;
     }
+    
 
-    /**
-     * Gets called by the game engine to draw the current location/size
-     */
-    @Override
-    public boolean draw(Graphics g) {
-	// using a boolean here so we can block drawing if isActive is false via call to
-	// super
-	if (super.draw(g)) {
-	    g.setColor(color);
-	    g.fillOval(position.x, position.y, size.width, size.height);
-	    g.setColor(color);
-	    g.setFont(new Font("Monospaced", Font.PLAIN, 12));
-	    g.drawString( name, position.x + nameOffset.x, position.y + nameOffset.y);
-	}
-	return true;
-    }
+ 
 
     @Override
     public String toString() {

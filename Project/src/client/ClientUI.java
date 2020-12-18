@@ -130,6 +130,10 @@ public class ClientUI extends JFrame implements Event {
 	color.addItem("Red");
 	color.addItem("Blue");
 	color.addItem("Green");
+	color.addItem("Black");
+	color.addItem("Orange");
+	color.addItem("Purple");
+	color.addItem("Pink");
 	panel.add(colorLabel);
 	panel.add(color);
 	JLabel userLabel = new JLabel("Username:");
@@ -242,16 +246,16 @@ public class ClientUI extends JFrame implements Event {
 	this.add(roomsPanel, "rooms");
     }
 
-    void addClient(String name) {
-	User u = new User(name);
-	Dimension p = new Dimension(userPanel.getSize().width, 30);
-	u.setPreferredSize(p);
-	u.setMinimumSize(p);
-	u.setMaximumSize(p);
-	userPanel.add(u);
-	users.add(u);
-	pack();
-    }
+    void addClient(String name, int score) {
+    	User u = new User(name, score, "<font color="+color+">%s</font>");
+    	Dimension p = new Dimension(userPanel.getSize().width, 30);
+    	u.setPreferredSize(p);
+    	u.setMinimumSize(p);
+    	u.setMaximumSize(p);
+    	userPanel.add(u);
+    	users.add(u);
+    	pack();
+        }
 
     void removeClient(User client) {
 	userPanel.remove(client);
@@ -259,6 +263,18 @@ public class ClientUI extends JFrame implements Event {
 	userPanel.revalidate();
 	userPanel.repaint();
     }
+    
+    public void resortUserList(List<Player> players) {
+    	Iterator<User> iter = users.iterator();
+    	while (iter.hasNext()) {
+    	    User u = iter.next();
+    	    if (u != null) {
+    		removeClient(u);
+    		iter.remove();
+    	    }
+    	}
+    	}
+        
 
     /***
      * Attempts to calculate the necessary dimensions for a potentially wrapped
@@ -363,7 +379,7 @@ public class ClientUI extends JFrame implements Event {
     @Override
     public void onClientConnect(String clientName, String message) {
 	log.log(Level.INFO, String.format("%s: %s", clientName, message));
-	addClient(clientName);
+	addClient(clientName,0);
 	if (message != null && !message.isBlank()) {
 	    self.addMessage(String.format("%s: %s", clientName, message));
 	}

@@ -373,6 +373,8 @@ public class GamePanel extends BaseGamePanel implements Event {
 	    iter.remove();
 	}
     }
+    
+    
 
 	@Override
 	public void onSyncDirection(String clientName, Point direction) {
